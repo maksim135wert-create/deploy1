@@ -22,7 +22,7 @@ import metrics as M
 
 # ============================ КОНФИГ ============================
 def get_conn():
-    dsn = os.getenv("DATABASE_URL")
+    dsn = os.getenv("DATABASE_PUBLIC_URL")
     if not dsn:
         raise RuntimeError("DATABASE_URL не задан")
 
