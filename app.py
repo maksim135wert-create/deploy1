@@ -21,13 +21,8 @@ from fastapi.staticfiles import StaticFiles
 import metrics as M
 
 # ============================ КОНФИГ ============================
-DB = dict(
-    dbname=os.getenv("DB_NAME", "Ostatki"),
-    user=os.getenv("DB_USER", "postgres"),
-    password=os.getenv("DB_PASS", "123"),
-    host=os.getenv("DB_HOST", "localhost"),
-    port=os.getenv("DB_PORT", "5432"),
-)
+    conn = psycopg2.connect(os.getenv("postgresql://postgres:UYCtrlmeYHlEuiVvgGKWERrMBJFZuaQt@postgres.railway.internal:5432/railway"))
+
 
 # Четыре основных склада. Имена — как в БД (нормализованные).
 # Поменяйте/дополните при необходимости; порядок = порядок вкладок.
