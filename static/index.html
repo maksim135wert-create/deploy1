@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Склад · Продажи</title>
+<style>
+  :root{--green:#217346;--green-dark:#1A5C38;--green-tint:#E8F2EC;--grid:#D4D4D4;--grid-strong:#B7B7B7;--head:#F3F3F3;--rownum:#F7F7F7;--ink:#1F2328;--ink-soft:#5C636A;--sheet:#FFFFFF;--shell:#E6E9ED;--hot:#E8413A;--low:#E69138;--slow:#6B7B8C;--dead:#9B2D2D;}
+  *{box-sizing:border-box;}html,body{margin:0;height:100%;}
+  body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--shell);color:var(--ink);font-size:13px;-webkit-font-smoothing:antialiased;}
+  .num{font-variant-numeric:tabular-nums;}.app{display:flex;flex-direction:column;height:100vh;}
+  .ribbon{background:var(--green);color:#fff;display:flex;align-items:center;gap:14px;padding:0 14px;height:46px;flex:none;}
+  .ribbon .logo{display:flex;align-items:center;gap:9px;font-weight:600;}
+  .ribbon .logo .mark{width:24px;height:24px;border-radius:3px;background:#fff;color:var(--green);display:grid;place-items:center;font-weight:800;font-size:15px;}
+  .ribbon .file{opacity:.85;font-size:12px;}.ribbon .file b{font-weight:600;opacity:1;}.ribbon .spacer{flex:1;}
+  .helpbtn{width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;cursor:pointer;font-size:14px;}
+  .helpbtn:hover{background:rgba(255,255,255,.34);}
+  .ribbon .period{font-size:12px;background:rgba(255,255,255,.14);padding:5px 10px;border-radius:4px;}
+  .ribbon .search{display:flex;align-items:center;background:#fff;border-radius:4px;height:28px;padding:0 8px;gap:6px;width:250px;}
+  .ribbon .search input{border:0;outline:0;font-size:13px;width:100%;color:var(--ink);}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--grid);border-bottom:1px solid var(--grid-strong);flex:none;}
+  .kpi{background:#fff;padding:12px 15px;display:flex;flex-direction:column;gap:3px;position:relative;}
+  .kpi .wh{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--green);font-weight:700;}
+  .kpi .rev{font-size:23px;font-weight:700;letter-spacing:-.3px;}
+  .kpi .rev .cur{font-size:12px;font-weight:500;color:var(--ink-soft);margin-left:3px;}
+  .kpi .trend{position:absolute;top:12px;right:13px;font-size:11px;font-weight:700;}
+  .kpi .trend.up{color:#1A8A4A;}.kpi .trend.down{color:#C5453E;}
+  .kpi .bar{height:3px;background:var(--green-tint);border-radius:2px;margin-top:9px;overflow:hidden;}
+  .kpi .bar i{display:block;height:100%;background:var(--green);}
+  .pager{display:flex;align-items:center;gap:10px;background:#FAFAFA;border-bottom:1px solid var(--grid-strong);padding:6px 12px;flex:none;font-size:12px;color:var(--ink-soft);}
+  .pager b{color:var(--ink);}
+  .pager .pbtn{border:1px solid var(--grid-strong);background:#fff;border-radius:4px;width:28px;height:26px;cursor:pointer;color:var(--ink);font-size:13px;}
+  .pager .pbtn:disabled{opacity:.4;cursor:default;}
+  .pager .pbtn:not(:disabled):hover{border-color:var(--green);color:var(--green);}
+  .pager select{border:1px solid var(--grid-strong);border-radius:4px;padding:3px 6px;font-size:12px;}
+  .pager .spacer{flex:1;}
+  .pager .ref{border:1px solid var(--green);color:var(--green);background:#fff;border-radius:4px;padding:4px 11px;font-size:12px;font-weight:600;cursor:pointer;}
+  .pager .ref:hover{background:var(--green-tint);}
+  .gridwrap{flex:1;overflow:auto;background:var(--sheet);position:relative;}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px;}
+  thead th{position:sticky;top:0;z-index:5;background:var(--head);border-right:1px solid var(--grid);border-bottom:1px solid var(--grid-strong);padding:6px 8px;text-align:right;font-weight:600;color:var(--ink-soft);white-space:nowrap;cursor:pointer;user-select:none;}
+  thead th.grouprow{top:0;background:var(--green);color:#fff;text-align:center;font-weight:700;border-right:1px solid var(--green-dark);font-size:11px;letter-spacing:.4px;text-transform:uppercase;cursor:default;}
+  thead tr.sub th{top:26px;}thead th.l{text-align:left;}thead th .arrow{font-size:9px;opacity:.5;margin-left:2px;}
+  thead th.sorted{color:var(--green);background:#E9F1EC;}thead th.sorted .arrow{opacity:1;}
+  tbody td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:5px 8px;text-align:right;white-space:nowrap;}
+  tbody td.l{text-align:left;}tbody tr:hover td{background:var(--green-tint)!important;}
+  td.rownum{background:var(--rownum);color:var(--ink-soft);text-align:center;font-size:11px;width:38px;position:sticky;left:0;z-index:3;}
+  td.sku{position:sticky;left:38px;z-index:3;background:#fff;font-weight:600;}
+  td.name{position:sticky;left:128px;z-index:3;background:#fff;min-width:230px;max-width:320px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;}
+  td.name:hover .nm{color:var(--green);text-decoration:underline;}
+  tr:hover td.rownum,tr:hover td.sku,tr:hover td.name{background:var(--green-tint)!important;}
+  thead th.rownum{left:0;z-index:6;width:38px;text-align:center;}thead th.sku{left:38px;z-index:6;}thead th.name{left:128px;z-index:6;}
+  .name .unit{font-size:10px;color:var(--ink-soft);font-weight:400;display:block;margin-top:1px;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10.5px;font-weight:700;color:#fff;line-height:1.4;}
+  .b-hot{background:var(--hot);}.b-low{background:var(--low);}.b-slow{background:var(--slow);}.b-dead{background:var(--dead);}
+  .b-ok{background:transparent;color:var(--ink-soft);font-weight:500;}
+  .cls{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-weight:700;font-size:11px;}
+  .A{background:#1A8A4A;color:#fff;}.B{background:#E7B400;color:#3a2f00;}.C{background:#D7DCE1;color:#5C636A;}
+  .X{background:#2D6CC4;color:#fff;}.Y{background:#9AB7DE;color:#13325c;}.Z{background:#E3C7C7;color:#7a2f2f;}
+  .gap-pos{color:#C5453E;font-weight:700;}.gap-neg{color:#1A8A4A;font-weight:600;}.gap-zero{color:var(--ink-soft);}
+  .mini{font-size:10px;color:var(--ink-soft);}
+  .chartbtn{border:1px solid var(--grid-strong);background:#fff;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--green);font-weight:600;}
+  .chartbtn:hover{background:var(--green-tint);border-color:var(--green);}
+  .empty{padding:40px;text-align:center;color:var(--ink-soft);}
+  .errbox{margin:30px;padding:18px 22px;border:1px solid #E7C3C3;background:#FCF3F3;border-radius:8px;color:#8a3030;line-height:1.6;}
+  .sheets{display:flex;align-items:stretch;background:var(--shell);border-top:1px solid var(--grid-strong);flex:none;height:34px;padding-left:8px;gap:2px;overflow-x:auto;}
+  .tab{display:flex;align-items:center;padding:0 16px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);background:#DCE0E4;border:1px solid var(--grid-strong);border-bottom:0;border-radius:6px 6px 0 0;margin-top:4px;white-space:nowrap;}
+  .tab:hover{background:#E9ECEF;}.tab.on{background:#fff;color:var(--green);font-weight:700;margin-top:0;border-top:2px solid var(--green);}
+  .detail{padding:0;overflow:auto;height:100%;background:#F7F8F9;}
+  .detail-head{background:#fff;border-bottom:1px solid var(--grid-strong);padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:4;}
+  .backbtn{border:1px solid var(--grid-strong);background:#fff;border-radius:5px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600;}
+  .backbtn:hover{background:var(--green-tint);border-color:var(--green);color:var(--green);}
+  .detail-head .t1{font-size:18px;font-weight:700;}.detail-head .t2{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .detail-head .art{font-family:Consolas,monospace;background:var(--green-tint);color:var(--green-dark);padding:2px 8px;border-radius:4px;font-size:13px;}
+  .panels{padding:22px 24px;max-width:1180px;}
+  .panel{background:#fff;border:1px solid var(--grid);border-radius:10px;padding:18px 20px;margin-bottom:20px;}
+  .panel h4{margin:0 0 4px;font-size:14px;}.panel .sub{font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;}
+  .legend-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:12px;}
+  .legend-row .li{display:flex;align-items:center;gap:6px;color:var(--ink-soft);}
+  .legend-row .li b{color:var(--ink);font-weight:600;}.legend-row .sw{width:14px;height:3px;border-radius:2px;}
+  .two{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  @media(max-width:900px){.two{grid-template-columns:1fr;}.kpis{grid-template-columns:repeat(2,1fr);}}
+  .wtab{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .wtab th{text-align:right;padding:7px 9px;border-bottom:2px solid var(--grid);color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;}
+  .wtab th.l,.wtab td.l{text-align:left;}.wtab td{padding:7px 9px;border-bottom:1px solid var(--grid);}
+  .wtab tr:last-child td{border-bottom:0;font-weight:700;background:#FAFBFA;}
+  .wdot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+  .modal{position:fixed;inset:0;background:rgba(20,30,25,.4);z-index:60;display:none;align-items:center;justify-content:center;}
+  .modal.open{display:flex;}
+  .modal-card{width:780px;max-width:94vw;max-height:88vh;overflow:auto;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .modal-card h2{background:var(--green);color:#fff;margin:0;padding:14px 20px;font-size:16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;}
+  .modal-card h2 button{background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:5px;width:28px;height:28px;cursor:pointer;font-size:16px;}
+  .modal-body{padding:18px 22px 26px;}
+  .hsec{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--green);font-weight:700;border-bottom:1px solid var(--grid);padding-bottom:5px;margin:20px 0 12px;}
+  .hsec:first-child{margin-top:0;}
+  .htbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .htbl td{padding:6px 8px;border-bottom:1px solid var(--grid);vertical-align:top;}
+  .htbl td:first-child{white-space:nowrap;width:1%;}
+  .htbl .d{color:var(--ink-soft);}.htbl .d b{color:var(--ink);}
+  .matrix{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:1px;background:var(--grid);border:1px solid var(--grid);border-radius:6px;overflow:hidden;font-size:11.5px;}
+  .matrix>div{background:#fff;padding:7px 9px;}
+  .matrix .h{background:var(--head);font-weight:700;text-align:center;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="ribbon">
+    <div class="logo"><span class="mark">С</span><span>Склад · Продажи</span></div>
+    <span class="file">база: <b>Ostatki</b></span>
+    <span class="spacer"></span>
+    <button class="helpbtn" id="helpbtn" title="Что значат метки и классы">?</button>
+    <span class="period" id="period">—</span>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" placeholder="Поиск по артикулу / номенклатуре…">
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="pager" id="pager" style="display:none">
+    <span id="pinfo">—</span><span class="spacer"></span>
+    <button class="pbtn" id="pfirst">«</button><button class="pbtn" id="pprev">‹</button>
+    <span id="ppage">1 / 1</span>
+    <button class="pbtn" id="pnext">›</button><button class="pbtn" id="plast">»</button>
+    <select id="psize"><option>50</option><option selected>100</option><option>200</option><option>500</option></select>
+    <span>строк</span><button class="ref" id="prefresh" title="Перечитать из базы">⟳ Обновить</button>
+  </div>
+  <div class="gridwrap" id="gridwrap"></div>
+  <div class="sheets" id="sheets"></div>
+</div>
+
+<div class="modal" id="help">
+  <div class="modal-card">
+    <h2>Шпаргалка: метки, метрики, ABC/XYZ <button id="helpclose">×</button></h2>
+    <div class="modal-body">
+      <div class="hsec">Метки товара</div>
+      <table class="htbl">
+        <tr><td><span class="badge b-hot">🔥 Hot</span></td><td class="d">Продаётся быстро, спрос растёт, важный товар. <b>Держать запас побольше, не упустить продажи.</b></td></tr>
+        <tr><td><span class="badge b-low">Дозаказ</span></td><td class="d">Остатка хватит меньше чем на срок поставки — пока товар доедет, уйдёшь в ноль. <b>Заказать сейчас.</b></td></tr>
+        <tr><td><span class="badge b-slow">Залежь</span></td><td class="d">Запаса больше чем на 120 дней. Деньги заморожены в медленном товаре. <b>Притормозить закуп.</b></td></tr>
+        <tr><td><span class="badge b-dead">Неликвид</span></td><td class="d">Почти не продаётся, а на складе лежит. <b>Распродажа или вывод из ассортимента.</b></td></tr>
+      </table>
+      <div class="hsec">Метрики</div>
+      <table class="htbl">
+        <tr><td><b>Дней</b></td><td class="d">На сколько дней хватит доступного остатка при текущем темпе: Доступно ÷ продажи в день. Меньше срока поставки → пора заказывать. Цвет: красный — дефицит, зелёный — норма, синий — оверсток.</td></tr>
+        <tr><td><b>Реком.</b></td><td class="d">Рекомендуемый запас: сколько примерно держать, чтобы не было ни дефицита, ни оверстока.</td></tr>
+        <tr><td><b>Δ заказ</b></td><td class="d">Реком − Доступно. <span class="gap-pos">+красное</span> — дозаказать столько, <span class="gap-neg">−зелёное</span> — излишек.</td></tr>
+        <tr><td><b>Ликвид.</b></td><td class="d">0–100, как легко товар превращается в деньги: скорость + стабильность спроса + оборачиваемость.</td></tr>
+      </table>
+      <div class="hsec">ABC — вклад в выручку</div>
+      <table class="htbl">
+        <tr><td><span class="cls A">A</span></td><td class="d">Топ-товары: дают первые ~80% выручки. Самые важные, держать всегда в наличии.</td></tr>
+        <tr><td><span class="cls B">B</span></td><td class="d">Середняки: следующие ~15% выручки.</td></tr>
+        <tr><td><span class="cls C">C</span></td><td class="d">Хвост: последние ~5% выручки. Много позиций, мало денег — можно держать минимум.</td></tr>
+      </table>
+      <div class="hsec">XYZ — стабильность спроса</div>
+      <table class="htbl">
+        <tr><td><span class="cls X">X</span></td><td class="d">Ровный спрос, продаётся стабильно из месяца в месяц. Легко планировать.</td></tr>
+        <tr><td><span class="cls Y">Y</span></td><td class="d">Спрос колеблется (сезонность, всплески). Планировать сложнее, нужен страховой запас.</td></tr>
+        <tr><td><span class="cls Z">Z</span></td><td class="d">Спрос скачет непредсказуемо. Заказывать осторожно.</td></tr>
+      </table>
+      <div class="hsec">Связка ABC × XYZ</div>
+      <div class="matrix">
+        <div class="h"></div><div class="h">X · ровный</div><div class="h">Y · колеблется</div><div class="h">Z · скачет</div>
+        <div class="h">A</div><div><b>AX</b> — золотые: важно и предсказуемо. Всегда в наличии.</div><div><b>AY</b> — важно, но колеблется. Страховой запас.</div><div><b>AZ</b> — важно, но непредсказуемо. Ручной контроль.</div>
+        <div class="h">B</div><div><b>BX</b> — стабильный середняк.</div><div><b>BY</b> — обычный товар.</div><div><b>BZ</b> — следить, чтоб не залёживался.</div>
+        <div class="h">C</div><div><b>CX</b> — мелочь, но предсказуемая.</div><div><b>CY</b> — мелочь с колебаниями.</div><div><b>CZ</b> — мало денег и непредсказуемо. <b>Первые на вывод.</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WHCOL=['#217346','#2D6CC4','#E69138','#9B4DCA'];
+const fmt=n=>(n==null)?'—':Math.round(n).toLocaleString('ru-RU');
+const fmtV=n=>(n==null)?'':Math.round(n).toLocaleString('ru-RU');
+const MN=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const shortMonth=s=>{const[y,m]=s.split('-');return MN[+m-1]+' '+y.slice(2);};
+let state={view:'summary',page:1,size:100,sort:'revenue',dir:'desc',q:'',whList:[],months:[]};
+async function api(u){const r=await fetch(u);if(!r.ok){throw new Error((await r.json().catch(()=>({}))).detail||r.statusText);}return r.json();}
+
+async function init(){
+  try{
+    const k=await api('/api/kpis');
+    state.whList=k.wh_list;state.months=k.months;
+    if(k.months.length)document.getElementById('period').textContent=shortMonth(k.months[0])+' — '+shortMonth(k.months[k.months.length-1])+' · '+k.months.length+' мес';
+    renderKPIs(k.warehouses);renderSheets();loadTable();
+  }catch(e){
+    document.getElementById('gridwrap').innerHTML=`<div class="errbox"><b>Не удалось загрузить витрину.</b><br>${e.message}<br><br>Проверьте, что PostgreSQL запущен и параметры в <code>app.py</code> верны, затем нажмите Обновить или перезапустите сервер.</div>`;
+  }
+}
+function renderKPIs(whs){
+  const box=document.getElementById('kpis');box.innerHTML='';
+  const maxRev=Math.max(...whs.map(w=>w.revenue),1);
+  whs.forEach(w=>{const cls=w.trend>=0?'up':'down';
+    box.insertAdjacentHTML('beforeend',`<div class="kpi"><span class="trend ${cls}">${w.trend>=0?'▲':'▼'} ${Math.abs(w.trend).toFixed(0)}%</span><span class="wh">${w.name}</span><span class="rev num">${fmt(w.revenue)}<span class="cur">₸</span></span><div class="bar"><i style="width:${(w.revenue/maxRev*100).toFixed(0)}%"></i></div></div>`);});
+}
+function renderSheets(){
+  const box=document.getElementById('sheets');box.innerHTML='';
+  const tabs=[{id:'summary',name:'Сводка'},...state.whList];
+  tabs.forEach(t=>{const el=document.createElement('div');el.className='tab'+((state.view===t.id)?' on':'');el.textContent=t.name;el.onclick=()=>{state.view=t.id;state.page=1;renderSheets();loadTable();};box.appendChild(el);});
+}
+function statusBadge(st){const m={hot:['b-hot','🔥 Hot'],low:['b-low','Дозаказ'],slow:['b-slow','Залежь'],dead:['b-dead','Неликвид'],ok:['b-ok','—']};const[c,t]=m[st]||m.ok;return `<span class="badge ${c}">${t}</span>`;}
+function gapCell(g){if(g>3)return `<span class="gap-pos num">+${fmt(g)}</span>`;if(g<-3)return `<span class="gap-neg num">${fmt(g)}</span>`;return `<span class="gap-zero num">0</span>`;}
+function dosColor(d){if(d>=9999)return '#E3C7C7';if(d<14)return '#F8696B';if(d<=45)return '#BFE3C8';if(d<=90)return '#FFF1B8';if(d<=120)return '#FFD79A';return '#D6E0EA';}
+function cfColor(v,min,max){let t=(v-min)/(max-min||1);t=Math.max(0,Math.min(1,t));const L=(a,b,k)=>a+(b-a)*k;let r,g,b;if(t<.5){const k=t/.5;r=L(248,255,k);g=L(105,235,k);b=L(107,132,k);}else{const k=(t-.5)/.5;r=L(255,99,k);g=L(235,190,k);b=L(132,123,k);}return `rgb(${r|0},${g|0},${b|0})`;}
+
+async function loadTable(){
+  const wrap=document.getElementById('gridwrap');
+  let d;
+  try{d=await api(`/api/table?view=${encodeURIComponent(state.view)}&page=${state.page}&size=${state.size}&sort=${state.sort}&direction=${state.dir}&q=${encodeURIComponent(state.q)}`);}
+  catch(e){wrap.innerHTML=`<div class="errbox">${e.message}</div>`;return;}
+  state.page=d.page;renderPager(d);
+  if(!d.rows.length){wrap.innerHTML='<div class="empty">Нет данных по этому фильтру.</div>';return;}
+  const liq=d.rows.map(r=>r.liquidity),lMin=Math.min(...liq),lMax=Math.max(...liq);
+  const revMax=Math.max(...d.rows.map(r=>r.revenue),1);
+  const sa=k=>`onclick="setSort('${k}')" class="${state.sort===k?'sorted':''} ${['art','nom'].includes(k)?'l':''}"`;
+  const ar=k=>state.sort===k?`<span class="arrow">${state.dir==='desc'?'▼':'▲'}</span>`:'';
+  const whTitle=state.view==='summary'?'4 склада':(state.whList.find(w=>w.id===state.view)||{}).name;
+  let h=`<table><thead>
+    <tr>
+      <th class="grouprow rownum"></th><th class="grouprow sku" style="left:38px">Товар</th><th class="grouprow name" style="left:128px">&nbsp;</th>
+      <th class="grouprow" colspan="4">Остатки · Сейчас</th>
+      <th class="grouprow" colspan="3">Ожидается</th>
+      <th class="grouprow" colspan="4">Продажи · ${whTitle}</th>
+      <th class="grouprow" colspan="1"></th>
+      <th class="grouprow" colspan="2">Запас</th>
+      <th class="grouprow" colspan="4">Классификация</th>
+    </tr>
+    <tr class="sub">
+      <th class="rownum">#</th><th class="sku" ${sa('art')}>Артикул ${ar('art')}</th><th class="name" ${sa('nom')}>Номенклатура ${ar('nom')}</th>
+      <th>В наличии</th><th>Отгруж.</th><th>В резерве</th><th ${sa('dostupno')}>Доступно ${ar('dostupno')}</th>
+      <th>Приход</th><th>Расход</th><th ${sa('ostatok')}>Остаток ${ar('ostatok')}</th>
+      <th ${sa('sold')}>Продано ${ar('sold')}</th><th>Объём дм³</th><th ${sa('revenue')}>Выручка ₸ ${ar('revenue')}</th><th ${sa('dos')}>Дней ${ar('dos')}</th>
+      <th>График</th>
+      <th ${sa('recommended')}>Реком. ${ar('recommended')}</th><th ${sa('gap')}>Δ заказ ${ar('gap')}</th>
+      <th>Метка</th><th ${sa('liquidity')}>Ликвид. ${ar('liquidity')}</th><th>ABC</th><th>XYZ</th>
+    </tr></thead><tbody>`;
+  const base=(d.page-1)*d.size;
+  d.rows.forEach((r,i)=>{
+    const liqBg=cfColor(r.liquidity,lMin,lMax),revW=(r.revenue/revMax*100).toFixed(0);
+    h+=`<tr>
+      <td class="rownum num">${base+i+1}</td><td class="sku num">${r.art}</td>
+      <td class="name l" onclick="openDetail('${r.art}')" title="${(r.nom||'').replace(/"/g,'&quot;')}"><span class="nm">${r.nom||'—'}</span><span class="unit">${r.unit||''}</span></td>
+      <td class="num">${fmt(r.nalichie)}</td><td class="num mini">${fmt(r.otgr)}</td><td class="num mini">${fmt(r.rezerv)}</td><td class="num" style="font-weight:600">${fmt(r.dostupno)}</td>
+      <td class="num mini">${fmt(r.prihod)}</td><td class="num mini">${fmt(r.rashod)}</td><td class="num">${fmt(r.ostatok)}</td>
+      <td class="num">${fmt(r.sold)}</td><td class="num mini">${fmtV(r.volume)}</td>
+      <td class="num" style="background:linear-gradient(90deg,#DCEFE2 ${revW}%,transparent ${revW}%)">${fmt(r.revenue)}</td>
+      <td class="num" style="background:${dosColor(r.dos)};font-weight:600">${r.dos>=9999?'∞':fmt(r.dos)}</td>
+      <td><button class="chartbtn" onclick="openDetail('${r.art}')">📈</button></td>
+      <td class="num" style="font-weight:600">${fmt(r.recommended)}</td><td>${gapCell(r.gap)}</td>
+      <td>${statusBadge(r.status)}</td><td class="num" style="background:${liqBg};font-weight:700;color:#1b2b22">${r.liquidity}</td>
+      <td><span class="cls ${r.abc}">${r.abc}</span></td><td><span class="cls ${r.xyz}">${r.xyz}</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';wrap.innerHTML=h;
+}
+function renderPager(d){
+  document.getElementById('pager').style.display='flex';
+  const from=d.total?(d.page-1)*d.size+1:0,to=Math.min(d.page*d.size,d.total);
+  document.getElementById('pinfo').innerHTML=`Показано <b>${from}–${to}</b> из <b>${d.total.toLocaleString('ru-RU')}</b>`;
+  document.getElementById('ppage').textContent=`${d.page} / ${d.pages}`;
+  document.getElementById('pfirst').disabled=d.page<=1;document.getElementById('pprev').disabled=d.page<=1;
+  document.getElementById('pnext').disabled=d.page>=d.pages;document.getElementById('plast').disabled=d.page>=d.pages;
+  window.__pages=d.pages;
+}
+function setSort(k){if(state.sort===k)state.dir=state.dir==='desc'?'asc':'desc';else{state.sort=k;state.dir='desc';}state.page=1;loadTable();}
+document.getElementById('pfirst').onclick=()=>{state.page=1;loadTable();};
+document.getElementById('pprev').onclick=()=>{state.page=Math.max(1,state.page-1);loadTable();};
+document.getElementById('pnext').onclick=()=>{state.page=Math.min(window.__pages||1,state.page+1);loadTable();};
+document.getElementById('plast').onclick=()=>{state.page=window.__pages||1;loadTable();};
+document.getElementById('psize').onchange=e=>{state.size=+e.target.value;state.page=1;loadTable();};
+document.getElementById('prefresh').onclick=async()=>{try{await api('/api/refresh');await init();}catch(e){alert(e.message);}};
+let st;document.getElementById('search').addEventListener('input',e=>{clearTimeout(st);st=setTimeout(()=>{state.q=e.target.value;state.page=1;loadTable();},300);});
+
+/* шпаргалка */
+document.getElementById('helpbtn').onclick=()=>document.getElementById('help').classList.add('open');
+document.getElementById('helpclose').onclick=()=>document.getElementById('help').classList.remove('open');
+document.getElementById('help').addEventListener('click',e=>{if(e.target.id==='help')e.currentTarget.classList.remove('open');});
+
+/* графики */
+function niceCeil(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p,m=n<=1?1:n<=2?2:n<=5?5:10;return m*p;}
+function lineChart(series,months){
+  const W=920,H=380,pl=58,pr=20,pt=18,pb=44,iw=W-pl-pr,ih=H-pt-pb,n=months.length;
+  const all=series.flatMap(s=>s.values.filter(v=>v!=null)),mx=niceCeil(Math.max(...all,1));
+  const X=i=>pl+(i/(Math.max(1,n-1)))*iw,Y=v=>pt+ih-(v/mx)*ih;
+  let g='';
+  for(let k=0;k<=4;k++){const v=mx*k/4,y=Y(v);g+=`<line x1="${pl}" y1="${y}" x2="${pl+iw}" y2="${y}" stroke="#E6E9ED"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#8a9099">${fmt(v)}</text>`;}
+  months.forEach((lb,i)=>{const x=X(i);g+=`<text x="${x}" y="${H-16}" text-anchor="middle" font-size="10" fill="#8a9099">${shortMonth(lb)}</text>`;});
+  let p='';
+  series.forEach(s=>{let d='',started=false,dots='';s.values.forEach((v,i)=>{if(v==null){started=false;return;}const x=X(i),y=Y(v);d+=(started?'L':'M')+x.toFixed(1)+','+y.toFixed(1)+' ';started=true;dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${s.thick?3:2.4}" fill="${s.color}"/>`;});p+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.thick?3:1.8}" stroke-linejoin="round"/>${dots}`;});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px"><line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+ih}" stroke="#C3C9CF"/><line x1="${pl}" y1="${pt+ih}" x2="${pl+iw}" y2="${pt+ih}" stroke="#C3C9CF"/>${g}${p}</svg>`;
+}
+function barChart(items){
+  const max=Math.max(...items.map(i=>i.value),1),W=420,rh=34,H=items.length*rh+10,bx=140,bw=W-bx-70;let s='';
+  items.forEach((it,i)=>{const y=i*rh+8,w=(it.value/max)*bw;s+=`<text x="${bx-10}" y="${y+17}" text-anchor="end" font-size="12" fill="#1F2328">${it.label}</text><rect x="${bx}" y="${y+4}" width="${w.toFixed(1)}" height="18" rx="3" fill="${it.color}"/><text x="${bx+w+8}" y="${y+17}" font-size="11.5" fill="#5C636A">${fmt(it.value)}</text>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">${s}</svg>`;
+}
+async function openDetail(art){
+  const wrap=document.getElementById('gridwrap');wrap.innerHTML='<div class="empty">Загрузка графиков…</div>';
+  let d;try{d=await api('/api/product/'+encodeURIComponent(art));}catch(e){wrap.innerHTML=`<div class="errbox">${e.message}</div>`;return;}
+  const series=d.warehouses.map(w=>({name:w.name,color:WHCOL[w.color_idx]||'#888',values:w.sales,thick:false}));
+  series.push({name:'Итого 4 склада',color:'#13321f',values:d.total_series,thick:true});
+  const revBars=d.warehouses.map(w=>({label:w.name,value:w.revenue,color:WHCOL[w.color_idx]||'#888'}));
+  const totRev=d.warehouses.reduce((a,b)=>a+b.revenue,0),totSold=d.warehouses.reduce((a,b)=>a+b.sold,0);
+  const totAvail=d.warehouses.reduce((a,b)=>a+b.available,0),totRec=d.warehouses.reduce((a,b)=>a+b.recommended,0),totGap=d.warehouses.reduce((a,b)=>a+b.gap,0);
+  let wr='';
+  d.warehouses.forEach(w=>{wr+=`<tr><td class="l"><span class="wdot" style="background:${WHCOL[w.color_idx]}"></span>${w.name}</td><td class="num">${fmt(w.available)}</td><td class="num">${fmt(w.sold)}</td><td class="num mini">${fmtV(w.volume)}</td><td class="num">${w.dos>=9999?'∞':fmt(w.dos)}</td><td class="num">${fmt(w.recommended)}</td><td>${gapCell(w.gap)}</td><td>${statusBadge(w.status)}</td></tr>`;});
+  wr+=`<tr><td class="l">Итого</td><td class="num">${fmt(totAvail)}</td><td class="num">${fmt(totSold)}</td><td class="num">—</td><td class="num">—</td><td class="num">${fmt(totRec)}</td><td>${gapCell(totGap)}</td><td></td></tr>`;
+  const leg=series.map(s=>`<span class="li"><span class="sw" style="background:${s.color};${s.thick?'height:4px':''}"></span><b>${s.name}</b></span>`).join('');
+  wrap.innerHTML=`<div class="detail">
+    <div class="detail-head"><button class="backbtn" onclick="loadTable()">← К таблице</button>
+      <div><div class="t1">${d.nom||'—'} <span class="art">${d.art}</span></div>
+      <div class="t2">${d.unit||''} · выручка за период ${fmt(totRev)} ₸ · продано ${fmt(totSold)}</div></div></div>
+    <div class="panels">
+      <div class="panel"><h4>Продажи по месяцам · ${d.art} на всех складах</h4>
+        <div class="sub">Один артикул на нескольких складах — вклад каждого и суммарная линия. Если склад заработал позже, его линия начинается с первого месяца с продажами.</div>
+        ${lineChart(series,d.months)}<div class="legend-row">${leg}</div></div>
+      <div class="two">
+        <div class="panel"><h4>Выручка по складам</h4><div class="sub">За весь период, ₸</div>${barChart(revBars)}</div>
+        <div class="panel"><h4>Остатки и рекомендация</h4><div class="sub">Где дозаказать, где излишек</div>
+          <table class="wtab"><thead><tr><th class="l">Склад</th><th>Доступно</th><th>Продано</th><th>Объём</th><th>Дней</th><th>Реком.</th><th>Δ заказ</th><th>Метка</th></tr></thead><tbody>${wr}</tbody></table></div>
+      </div>
+    </div></div>`;
+}
+init();
+</script>
+</body>
+</html>
