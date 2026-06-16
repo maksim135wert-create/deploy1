@@ -21,7 +21,11 @@ from fastapi.staticfiles import StaticFiles
 import metrics as M
 
 # ============================ КОНФИГ ============================
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+def get_conn():
+    return psycopg2.connect(
+        os.getenv("DATABASE_URL"),
+        sslmode="require"
+    )
 
 
 # Четыре основных склада. Имена — как в БД (нормализованные).
