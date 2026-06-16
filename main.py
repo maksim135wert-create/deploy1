@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 import metrics as M
 
 # ============================ КОНФИГ ============================
-    conn = psycopg2.connect(os.getenv("postgresql://postgres:UYCtrlmeYHlEuiVvgGKWERrMBJFZuaQt@postgres.railway.internal:5432/railway"))
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
 
 
 # Четыре основных склада. Имена — как в БД (нормализованные).
