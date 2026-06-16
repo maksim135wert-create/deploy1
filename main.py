@@ -42,7 +42,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ============================ ДОСТУП К БД ============================
 def fetch(sql, params=None):
-    conn = psycopg2.connect(**DB)
+    conn = get_conn()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(sql, params or [])
