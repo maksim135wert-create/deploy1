@@ -22,10 +22,13 @@ import metrics as M
 
 # ============================ КОНФИГ ============================
 def get_conn():
-    return psycopg2.connect(
-        os.getenv("DATABASE_URL"),
-        sslmode="require"
-    )
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        raise RuntimeError("DATABASE_URL не задан")
+
+    dsn = dsn.replace("postgres://", "postgresql://")
+
+    return psycopg2.connect(dsn, sslmode="require")
 
 
 # Четыре основных склада. Имена — как в БД (нормализованные).
